@@ -31,7 +31,7 @@ class GameView extends GetView<MarbleGameController> {
                   ),
                   child: Center(
                     child: Text(
-                      "Find Theresult of the division",
+                      "Find Theresult of The Division",
                       style: Get.textTheme.titleLarge,
                     ),
                   ),
@@ -55,9 +55,13 @@ class GameView extends GetView<MarbleGameController> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(
-                          "24 % 3",
-                          style: Get.textTheme.displayLarge,
+                        child: Obx(
+                          () => Text(
+                            "${controller.currentEquation.value.a} ÷ ${controller.currentEquation.value.b}",
+                            style: Get.textTheme.displayLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -73,6 +77,19 @@ class GameView extends GetView<MarbleGameController> {
                         child: Center(
                           child: Text("=", style: Get.textTheme.headlineLarge),
                         ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 40,
+                      top: -10,
+                      child: IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: MyColor.accent,
+                          shadowColor: MyColor.secondary,
+                          elevation: 4,
+                        ),
+                        onPressed: controller.generateNewEquation,
+                        icon: Icon(Icons.refresh, color: MyColor.secondary),
                       ),
                     ),
                   ],

@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:marble_grouping_game/app/data/models/equation_model.dart';
 
 class EquationGenerator {
-  EquationGenerator({this.maxResult = 10, this.maxB = 30, this.maxA = 100});
+  EquationGenerator({this.maxResult = 10, this.maxB = 30, this.maxA = 30});
 
   final int maxResult;
   final int maxB;
@@ -15,8 +15,8 @@ class EquationGenerator {
     int a, b, result;
 
     do {
-      result = _random.nextInt(maxResult) + 1;
-      b = _random.nextInt(maxB) + 2;
+      result = _random.nextInt(maxResult - 1) + 2; // result from 2 to maxResult
+      b = _random.nextInt(maxB - 1) + 2; // result from 2 to maxResult
       a = result * b;
     } while (a > maxA);
 
