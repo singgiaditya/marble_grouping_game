@@ -41,7 +41,11 @@ class GameView extends GetView<MarbleGameController> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      margin: EdgeInsets.symmetric(horizontal: Get.width * 0.1),
+                      margin: EdgeInsets.only(
+                        left: Get.width * 0.1,
+                        right: Get.width * 0.1,
+                        bottom: 32,
+                      ),
                       padding: EdgeInsets.all(16),
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -66,20 +70,6 @@ class GameView extends GetView<MarbleGameController> {
                       ),
                     ),
                     Positioned(
-                      right: Get.width * 0.4,
-                      bottom: -20,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 40),
-                        decoration: BoxDecoration(
-                          color: MyColor.secondary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text("=", style: Get.textTheme.headlineLarge),
-                        ),
-                      ),
-                    ),
-                    Positioned(
                       right: 40,
                       top: -10,
                       child: IconButton(
@@ -92,11 +82,33 @@ class GameView extends GetView<MarbleGameController> {
                         icon: Icon(Icons.refresh, color: MyColor.secondary),
                       ),
                     ),
+                    Positioned(
+                      right: Get.width * 0.4,
+                      bottom: 10,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        decoration: BoxDecoration(
+                          color: MyColor.secondary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text("=", style: Get.textTheme.headlineLarge),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
-            Expanded(child: GameWidget(game: MarbleFlame())),
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  final game = MarbleFlame();
+                  controller.game = game;
+                  return GameWidget(game: game);
+                },
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: SuccessButon(),

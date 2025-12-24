@@ -2,12 +2,14 @@ import 'package:get/get.dart';
 import 'package:marble_grouping_game/app/core/utils/equation_generator.dart';
 import 'package:marble_grouping_game/app/data/models/equation_model.dart';
 import 'dart:async';
+import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
 
 class MarbleGameController extends GetxController {
   final EquationGenerator equationGenerator = EquationGenerator();
   
   Rx<EquationModel> currentEquation = EquationModel(a: 0, b: 1).obs;
   RxBool isAnimating = false.obs;
+  MarbleFlame? game;
   Timer? _animationTimer;
   final int _animationDuration = 3000; // total animation duration in ms
   final int _animationStep = 100; // update every 100ms
@@ -39,6 +41,8 @@ class MarbleGameController extends GetxController {
         // animation done, set actual equation
         currentEquation.value = newEquation;
         isAnimating.value = false;
+        // Update marbles after equation is set
+        _updateMarbles();
         timer.cancel();
       } else {
         // Update with random numbers during animation
@@ -48,6 +52,10 @@ class MarbleGameController extends GetxController {
         );
       }
     });
+  }
+
+  void _updateMarbles() {
+    game?.updateMarbles(currentEquation.value.result * 3);
   }
 
   int _getRandomNumber(int min, int max) {
