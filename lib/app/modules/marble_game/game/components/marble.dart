@@ -125,16 +125,18 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
 
     // If in a group, apply scale to all group marbles
     if (currentGroup != null) {
-      for (final marble in currentGroup!.marbles) {
-        // Remove any existing scale effects
-        marble.children.whereType<ScaleEffect>().toList().forEach(
-          (effect) => effect.removeFromParent(),
-        );
-        marble.children.whereType<SequenceEffect>().toList().forEach(
-          (effect) => effect.removeFromParent(),
-        );
+      // Increase group priority so lines render above marbles
+      currentGroup!.priority = 101;
 
-        // Reset scale to 1.0 first
+      for (final marble in currentGroup!.marbles) {
+        // Remove ALL effects to prevent accumulation
+        marble.children.toList().forEach((child) {
+          if (child is ScaleEffect || child is SequenceEffect) {
+            child.removeFromParent();
+          }
+        });
+
+        // Force reset scale to 1.0
         marble.scale = Vector2.all(1.0);
 
         // Apply drag scale to all marbles in group
@@ -146,15 +148,14 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
         marble.priority = 100;
       }
     } else {
-      // Single marble: remove existing effects
-      children.whereType<ScaleEffect>().toList().forEach(
-        (effect) => effect.removeFromParent(),
-      );
-      children.whereType<SequenceEffect>().toList().forEach(
-        (effect) => effect.removeFromParent(),
-      );
+      // Single marble: remove ALL effects
+      children.toList().forEach((child) {
+        if (child is ScaleEffect || child is SequenceEffect) {
+          child.removeFromParent();
+        }
+      });
 
-      // Reset scale to 1.0 first, then apply drag scale
+      // Force reset scale to 1.0
       scale = Vector2.all(1.0);
 
       // Visual feedback: slight scale increase
@@ -190,25 +191,32 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
 
     // If in a group, reset scale for all group marbles
     if (currentGroup != null) {
-      for (final marble in currentGroup!.marbles) {
-        // Remove any existing scale effects
-        marble.children.whereType<ScaleEffect>().toList().forEach(
-          (effect) => effect.removeFromParent(),
-        );
+      // Reset group priority
+      currentGroup!.priority = 1;
 
-        // Reset scale to 1.0 immediately
+      for (final marble in currentGroup!.marbles) {
+        // Remove ALL effects
+        marble.children.toList().forEach((child) {
+          if (child is ScaleEffect || child is SequenceEffect) {
+            child.removeFromParent();
+          }
+        });
+
+        // Force reset scale to 1.0
         marble.scale = Vector2.all(1.0);
 
         // Reset priority
         marble.priority = 0;
       }
     } else {
-      // Single marble: remove existing effects
-      children.whereType<ScaleEffect>().toList().forEach(
-        (effect) => effect.removeFromParent(),
-      );
+      // Single marble: remove ALL effects
+      children.toList().forEach((child) {
+        if (child is ScaleEffect || child is SequenceEffect) {
+          child.removeFromParent();
+        }
+      });
 
-      // Reset scale to 1.0 immediately
+      // Force reset scale to 1.0
       scale = Vector2.all(1.0);
 
       // Reset priority
