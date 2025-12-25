@@ -29,6 +29,7 @@ class MarbleGameController extends GetxController {
   void generateNewEquation() {
     if (isAnimating.value) return;
     
+    game?.animateAllMarblesToCenter();
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
     
