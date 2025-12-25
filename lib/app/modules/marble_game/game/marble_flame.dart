@@ -5,6 +5,8 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:marble_grouping_game/app/core/themes/my_color.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble.dart';
 import 'package:flame/effects.dart';
 
@@ -13,9 +15,11 @@ class MarbleFlame extends FlameGame {
   final List<Vector2> _occupiedPositions = [];
 
   @override
-  Color backgroundColor() => const Color(0xff000000);
+  Color backgroundColor() => const Color(0x00000000);
 
   double marbleRadius() => 10;
+
+  Vector2 areaSize() => Vector2(60, (size.y / 3) - 20);
 
   @override
   FutureOr<void> onLoad() {
@@ -30,6 +34,19 @@ class MarbleFlame extends FlameGame {
       ..position = Vector2(size.x / 2, size.y / 2);
     add(marble);
     // Do not animate to random initially
+    
+    final SubmitArea area1 = SubmitArea()
+      ..size = areaSize()
+      ..position = Vector2(0, 0);
+
+    final SubmitArea area2 = SubmitArea(bgColor: MyColor.area2, shadowColor: MyColor.area2Shadow)
+      ..size = areaSize()
+      ..position = Vector2(0, area1.position.y + areaSize().y + 20);
+
+    final SubmitArea area3 = SubmitArea(bgColor: MyColor.area3, shadowColor: MyColor.area3Shadow)
+      ..size = areaSize()
+      ..position = Vector2(0, area2.position.y + areaSize().y + 20);
+    addAll([area1, area2, area3]);
   }
 
   void updateMarbles(int count) {
@@ -70,7 +87,7 @@ class MarbleFlame extends FlameGame {
   void _animateMarbleToRandom(Marble marble) {
     const double minDistance =
         30; // Minimum distance between marbles (2*radius + margin)
-    const double leftMargin = 20; // Margin from left side
+    const double leftMargin = 80; // Margin from left side
     double radius = marbleRadius();
     Vector2 randomPosition;
     int attempts = 0;
