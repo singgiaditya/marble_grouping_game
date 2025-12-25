@@ -70,40 +70,97 @@ class MarbleFlame extends FlameGame {
 
   void updateMarbles(int count) {
     _occupiedPositions.clear();
-    final marbles = children.whereType<Marble>().toList();
-    // If count changed, adjust
-    if (marbles.length > count) {
-      // Remove excess
-      for (int i = count; i < marbles.length; i++) {
-        remove(marbles[i]);
-      }
-      marbles.removeRange(count, marbles.length);
-    } else if (marbles.length < count) {
-      // Add more at center
-      for (int i = marbles.length; i < count; i++) {
-        final marble = Marble(radius: marbleRadius())
-          ..position = Vector2(size.x / 2, size.y / 2);
-        add(marble);
-        marbles.add(marble);
-      }
+
+    // Collect all marbles that need to be detached
+    final List<Marble> marblesToDetach = [];
+    for (final group in groups) {
+      marblesToDetach.addAll(group.marbles.toList());
     }
-    // Now animate all to random
-    for (final marble in marbles) {
-      _animateMarbleToRandom(marble);
+
+    // Step 1: Detach marbles one by one with staggered timing
+    if (marblesToDetach.isNotEmpty) {
+      for (int i = 0; i < marblesToDetach.length; i++) {
+        final marble = marblesToDetach[i];
+        final delay = i * 0.05; // 50ms between each detachment
+
+        add(
+          TimerComponent(
+            period: delay,
+            removeOnFinish: true,
+            onTick: () {
+              if (marble.currentGroup != null) {
+                marble.currentGroup!.removeMarble(marble);
+              }
+            },
+          ),
+        );
+      }
+
+      // Calculate total detachment time
+      // Each marble: 50ms delay + 200ms detach animation + 300ms color fade
+      final detachmentTime =
+          marblesToDetach.length * 0.05 + 0.6; // Increased buffer
+
+      // Step 2: After all detachments complete, animate to center
+      add(
+        TimerComponent(
+          period: detachmentTime,
+          removeOnFinish: true,
+          onTick: () {
+            _animateMarblesToCenterAndSpread(count);
+          },
+        ),
+      );
+    } else {
+      // No groups to detach, go straight to center animation
+      _animateMarblesToCenterAndSpread(count);
     }
 
     // Update total marbles for validation
     totalMarbles = count;
   }
 
-  void animateAllMarblesToCenter() {
-    final center = Vector2(size.x / 2, size.y / 2); // Screen center
-    Get.log('Animating marbles to center at $center');
-    for (final component in children) {
-      if (component is Marble) {
-        component.add(MoveToEffect(center, LinearEffectController(1.0)));
+  /// Helper method to animate marbles to center and then spread
+  void _animateMarblesToCenterAndSpread(int count) {
+    final marbles = children.whereType<Marble>().toList();
+    final center = Vector2(size.x / 2, size.y / 2);
+
+    // Animate all existing marbles to center with smooth easing
+    for (final marble in marbles) {
+      marble.add(
+        MoveToEffect(
+          center,
+          EffectController(duration: 0.6, curve: Curves.easeInOut),
+        ),
+      );
+    }
+
+    // Adjust marble count if needed
+    if (marbles.length > count) {
+      // Remove excess marbles
+      for (int i = count; i < marbles.length; i++) {
+        remove(marbles[i]);
+      }
+    } else if (marbles.length < count) {
+      // Add new marbles at center
+      for (int i = marbles.length; i < count; i++) {
+        final marble = Marble(radius: marbleRadius())..position = center;
+        add(marble);
       }
     }
+
+    // Step 3: Wait for center animation, then spread to random
+    add(
+      TimerComponent(
+        period: 0.7, // Wait for center animation to complete
+        removeOnFinish: true,
+        onTick: () {
+          for (final marble in children.whereType<Marble>()) {
+            _animateMarbleToRandom(marble);
+          }
+        },
+      ),
+    );
   }
 
   void _animateMarbleToRandom(Marble marble) {

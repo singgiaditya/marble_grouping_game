@@ -6,7 +6,7 @@ import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.d
 
 class MarbleGameController extends GetxController {
   final EquationGenerator equationGenerator = EquationGenerator();
-  
+
   Rx<EquationModel> currentEquation = EquationModel(a: 0, b: 1).obs;
   RxBool isAnimating = false.obs;
   MarbleFlame? game;
@@ -28,16 +28,17 @@ class MarbleGameController extends GetxController {
 
   void generateNewEquation() {
     if (isAnimating.value) return;
-    
-    game?.animateAllMarblesToCenter();
+
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
-    
+
     // start animation
     int elapsed = 0;
-    _animationTimer = Timer.periodic(Duration(milliseconds: _animationStep), (timer) {
+    _animationTimer = Timer.periodic(Duration(milliseconds: _animationStep), (
+      timer,
+    ) {
       elapsed += _animationStep;
-      
+
       if (elapsed >= _animationDuration) {
         // animation done, set actual equation
         currentEquation.value = newEquation;
