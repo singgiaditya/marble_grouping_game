@@ -17,7 +17,8 @@ class MarbleGameController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    generateNewEquation();
+    // Don't generate equation here - wait for game to be ready
+    // UI will trigger first equation generation
   }
 
   @override
@@ -26,11 +27,21 @@ class MarbleGameController extends GetxController {
     super.onClose();
   }
 
+  /// Call this after game is ready to start first equation
+  void initializeGame() {
+    if (game != null) {
+      generateNewEquation();
+    }
+  }
+
   void generateNewEquation() {
     if (isAnimating.value) return;
 
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
+
+    // Start center animation immediately
+    game?.animateMarblesToCenter(newEquation.result * 3);
 
     // start animation
     int elapsed = 0;
@@ -43,8 +54,10 @@ class MarbleGameController extends GetxController {
         // animation done, set actual equation
         currentEquation.value = newEquation;
         isAnimating.value = false;
-        // Update marbles after equation is set
-        _updateMarbles();
+
+        // Spread marbles when animation completes
+        game?.spreadMarbles(newEquation.result * 3);
+
         timer.cancel();
       } else {
         // Update with random numbers during animation
@@ -54,10 +67,6 @@ class MarbleGameController extends GetxController {
         );
       }
     });
-  }
-
-  void _updateMarbles() {
-    game?.updateMarbles(currentEquation.value.result * 3);
   }
 
   int _getRandomNumber(int min, int max) {

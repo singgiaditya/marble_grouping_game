@@ -44,11 +44,7 @@ class MarbleFlame extends FlameGame {
     camera.viewfinder.anchor = Anchor.center;
 
     _occupiedPositions.clear();
-    // Spawn 1 marble at center for initial load
-    final marble = Marble(radius: marbleRadius())
-      ..position = Vector2(size.x / 2, size.y / 2);
-    add(marble);
-    // Do not animate to random initially
+    // Don't create initial marbles here - let controller handle it
 
     final SubmitArea area1 = SubmitArea()
       ..size = areaSize()
@@ -107,26 +103,38 @@ class MarbleFlame extends FlameGame {
           period: detachmentTime,
           removeOnFinish: true,
           onTick: () {
-            _animateMarblesToCenterAndSpread(count);
+            animateMarblesToCenter(count);
           },
         ),
       );
     } else {
       // No groups to detach, go straight to center animation
-      _animateMarblesToCenterAndSpread(count);
+      animateMarblesToCenter(count);
     }
 
     // Update total marbles for validation
     totalMarbles = count;
   }
 
-  /// Helper method to animate marbles to center and then spread
-  void _animateMarblesToCenterAndSpread(int count) {
+  /// Animate all marbles to center and adjust count
+  void animateMarblesToCenter(int count) {
     final marbles = children.whereType<Marble>().toList();
     final center = Vector2(size.x / 2, size.y / 2);
 
-    // Step 1: Animate all existing marbles to center
-    for (final marble in marbles) {
+    // First, adjust marble count immediately if needed
+    if (marbles.length < count) {
+      // Add new marbles at center immediately
+      for (int i = marbles.length; i < count; i++) {
+        final marble = Marble(radius: marbleRadius())..position = center;
+        add(marble);
+      }
+    }
+
+    // Get updated marble list
+    final allMarbles = children.whereType<Marble>().toList();
+
+    // Animate all marbles to center
+    for (final marble in allMarbles) {
       marble.add(
         MoveToEffect(
           center,
@@ -135,38 +143,34 @@ class MarbleFlame extends FlameGame {
       );
     }
 
-    // Step 2: Wait for center animation to complete, then adjust count and spread
+    // Wait for center animation, then remove excess if needed
     add(
       TimerComponent(
-        period: 0.7, // Wait for center animation to complete
+        period: 0.7,
         removeOnFinish: true,
         onTick: () {
           final currentMarbles = children.whereType<Marble>().toList();
 
-          // Adjust marble count after they've gathered at center
+          // Remove excess marbles if count decreased
           if (currentMarbles.length > count) {
-            // Remove excess marbles
             for (int i = count; i < currentMarbles.length; i++) {
               remove(currentMarbles[i]);
             }
-          } else if (currentMarbles.length < count) {
-            // Add new marbles at center
-            for (int i = currentMarbles.length; i < count; i++) {
-              final marble = Marble(radius: marbleRadius())..position = center;
-              add(marble);
-            }
           }
+        },
+      ),
+    );
+  }
 
-          // Step 3: Small delay to ensure new marbles are fully added
-          add(
-            TimerComponent(
-              period: 0.05, // Small delay for marbles to be registered
-              removeOnFinish: true,
-              onTick: () {
-                _spreadMarblesInPattern(count);
-              },
-            ),
-          );
+  /// Spread marbles from center to random positions
+  void spreadMarbles(int count) {
+    // Small delay to ensure marbles are ready
+    add(
+      TimerComponent(
+        period: 0.05,
+        removeOnFinish: true,
+        onTick: () {
+          _spreadMarblesInPattern(count);
         },
       ),
     );

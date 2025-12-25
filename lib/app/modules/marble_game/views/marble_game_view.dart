@@ -105,6 +105,10 @@ class GameView extends GetView<MarbleGameController> {
                 builder: (context) {
                   final game = MarbleFlame();
                   controller.game = game;
+                  // Initialize game after assignment
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    controller.initializeGame();
+                  });
                   return GameWidget(game: game);
                 },
               ),
