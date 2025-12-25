@@ -11,7 +11,7 @@ class MarbleGameController extends GetxController {
   RxBool isAnimating = false.obs;
   MarbleFlame? game;
   Timer? _animationTimer;
-  final int _animationDuration = 3000; // total animation duration in ms
+  final int _animationDuration = 2000; // total animation duration in ms
   final int _animationStep = 100; // update every 100ms
 
   @override

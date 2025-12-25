@@ -125,7 +125,7 @@ class MarbleFlame extends FlameGame {
     final marbles = children.whereType<Marble>().toList();
     final center = Vector2(size.x / 2, size.y / 2);
 
-    // Animate all existing marbles to center with smooth easing
+    // Step 1: Animate all existing marbles to center
     for (final marble in marbles) {
       marble.add(
         MoveToEffect(
@@ -135,27 +135,38 @@ class MarbleFlame extends FlameGame {
       );
     }
 
-    // Adjust marble count if needed
-    if (marbles.length > count) {
-      // Remove excess marbles
-      for (int i = count; i < marbles.length; i++) {
-        remove(marbles[i]);
-      }
-    } else if (marbles.length < count) {
-      // Add new marbles at center
-      for (int i = marbles.length; i < count; i++) {
-        final marble = Marble(radius: marbleRadius())..position = center;
-        add(marble);
-      }
-    }
-
-    // Step 3: Wait for center animation, then spread in grid pattern
+    // Step 2: Wait for center animation to complete, then adjust count and spread
     add(
       TimerComponent(
         period: 0.7, // Wait for center animation to complete
         removeOnFinish: true,
         onTick: () {
-          _spreadMarblesInPattern(count);
+          final currentMarbles = children.whereType<Marble>().toList();
+
+          // Adjust marble count after they've gathered at center
+          if (currentMarbles.length > count) {
+            // Remove excess marbles
+            for (int i = count; i < currentMarbles.length; i++) {
+              remove(currentMarbles[i]);
+            }
+          } else if (currentMarbles.length < count) {
+            // Add new marbles at center
+            for (int i = currentMarbles.length; i < count; i++) {
+              final marble = Marble(radius: marbleRadius())..position = center;
+              add(marble);
+            }
+          }
+
+          // Step 3: Small delay to ensure new marbles are fully added
+          add(
+            TimerComponent(
+              period: 0.05, // Small delay for marbles to be registered
+              removeOnFinish: true,
+              onTick: () {
+                _spreadMarblesInPattern(count);
+              },
+            ),
+          );
         },
       ),
     );
