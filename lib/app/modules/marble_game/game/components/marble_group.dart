@@ -135,26 +135,23 @@ class MarbleGroup extends Component {
   }
 
   /// Rebuild connection lines based on current marble positions
-  /// Creates a Complete Graph (Kn) - all marbles connected to all others
+  /// Creates a Ring Pattern (Polygon) - only adjacent marbles connected
   void _rebuildConnectionLines() {
     _connectionLines.clear();
 
     if (marbles.length < 2) return;
 
-    // Fully connected: every marble connects to every other marble
-    // This creates a Complete Graph (Kn) with n(n-1)/2 edges
+    // Ring pattern: connect each marble to the next one in circle
+    // This creates a polygon with n edges (much more efficient than n(n-1)/2)
     for (int i = 0; i < marbles.length; i++) {
-      for (int j = i + 1; j < marbles.length; j++) {
-        _connectionLines.add(
-          _ConnectionLine(
-            start: marbles[i].position.clone(),
-            end: marbles[j].position.clone(),
-            color: Colors.white.withOpacity(
-              0.4,
-            ), // More transparent for dense mesh
-          ),
-        );
-      }
+      final nextIndex = (i + 1) % marbles.length;
+      _connectionLines.add(
+        _ConnectionLine(
+          start: marbles[i].position.clone(),
+          end: marbles[nextIndex].position.clone(),
+          color: Colors.white.withOpacity(0.8),
+        ),
+      );
     }
 
     _linesAnimated = false;
@@ -262,17 +259,11 @@ class MarbleGroup extends Component {
 
     // Update connection lines to follow marble positions in real-time
     if (_linesAnimated && marbles.length >= 2) {
-      // Rebuild all connections to match current marble positions
-      // This ensures lines follow marbles during drag
-      int lineIndex = 0;
-      for (int i = 0; i < marbles.length; i++) {
-        for (int j = i + 1; j < marbles.length; j++) {
-          if (lineIndex < _connectionLines.length) {
-            _connectionLines[lineIndex].start = marbles[i].position.clone();
-            _connectionLines[lineIndex].end = marbles[j].position.clone();
-            lineIndex++;
-          }
-        }
+      // Update ring connections to match current marble positions
+      for (int i = 0; i < marbles.length && i < _connectionLines.length; i++) {
+        final nextIndex = (i + 1) % marbles.length;
+        _connectionLines[i].start = marbles[i].position.clone();
+        _connectionLines[i].end = marbles[nextIndex].position.clone();
       }
     }
   }
