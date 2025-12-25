@@ -149,18 +149,59 @@ class MarbleFlame extends FlameGame {
       }
     }
 
-    // Step 3: Wait for center animation, then spread to random
+    // Step 3: Wait for center animation, then spread in grid pattern
     add(
       TimerComponent(
         period: 0.7, // Wait for center animation to complete
         removeOnFinish: true,
         onTick: () {
-          for (final marble in children.whereType<Marble>()) {
-            _animateMarbleToRandom(marble);
-          }
+          _spreadMarblesInPattern(count);
         },
       ),
     );
+  }
+
+  /// Spread marbles in a packed random dot cluster pattern
+  /// Random positions with minimum distance to prevent overlap
+  void _spreadMarblesInPattern(int count) {
+    final marblesList = children.whereType<Marble>().toList();
+    if (marblesList.isEmpty) return;
+
+    // Clear occupied positions for fresh placement
+    _occupiedPositions.clear();
+
+    const double leftMargin = 80.0;
+    const double minDistance = 50.0; // Minimum distance between marbles
+    final radius = marbleRadius();
+
+    // Position each marble randomly with distance constraints
+    for (int i = 0; i < marblesList.length && i < count; i++) {
+      Vector2 randomPosition;
+      int attempts = 0;
+      const int maxAttempts = 100;
+
+      do {
+        final randomX =
+            leftMargin +
+            radius +
+            _random.nextDouble() * (size.x - leftMargin - 2 * radius);
+        final randomY = radius + _random.nextDouble() * (size.y - 2 * radius);
+        randomPosition = Vector2(randomX, randomY);
+        attempts++;
+      } while (_isPositionOccupied(randomPosition, minDistance) &&
+          attempts < maxAttempts);
+
+      // Add position to occupied list
+      _occupiedPositions.add(randomPosition);
+
+      // Animate marble to position
+      marblesList[i].add(
+        MoveToEffect(
+          randomPosition,
+          EffectController(duration: 1.0, curve: Curves.easeOut),
+        ),
+      );
+    }
   }
 
   void _animateMarbleToRandom(Marble marble) {
