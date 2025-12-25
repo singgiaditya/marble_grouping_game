@@ -1,0 +1,299 @@
+import 'dart:math';
+import 'dart:ui';
+import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
+import 'package:flutter/material.dart' hide Image, Gradient;
+import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
+
+/// Manages a group of marbles with visual connections and animations
+class MarbleGroup extends Component {
+  final List<Marble> marbles = [];
+  final List<_ConnectionLine> _connectionLines = [];
+
+  SubmitArea? assignedArea;
+  bool isSubmitted = false;
+  bool? isCorrect;
+
+  Color groupColor;
+  final double proximityThreshold;
+
+  // Animation state
+  bool _linesAnimated = false;
+
+  MarbleGroup({
+    this.groupColor = const Color(0xFF64B5F6), // Soft blue default
+    this.proximityThreshold = 40.0,
+  });
+
+  /// Add a marble to this group with animation
+  void addMarble(Marble marble) {
+    if (marbles.contains(marble)) return;
+
+    marbles.add(marble);
+    marble.currentGroup = this;
+
+    // Animate color transition
+    marble.animateColorTransition(groupColor);
+
+    // Play merge animation
+    marble.playMergeAnimation();
+
+    // Calculate and animate to pattern position
+    _arrangeMarbles();
+
+    // Rebuild connection lines
+    _rebuildConnectionLines();
+
+    // Animate new lines
+    _animateLines();
+  }
+
+  /// Arrange marbles in a circular pattern around center
+  void _arrangeMarbles() {
+    if (marbles.isEmpty) return;
+
+    final center = _calculateGroupCenter();
+    final radius = 25.0; // Distance from center
+
+    if (marbles.length == 1) {
+      // Single marble stays at its position
+      return;
+    } else if (marbles.length == 2) {
+      // Two marbles: position on opposite sides
+      final angle1 = 0.0;
+      final angle2 = pi;
+      _positionMarble(marbles[0], center, radius, angle1);
+      _positionMarble(marbles[1], center, radius, angle2);
+    } else {
+      // Multiple marbles: arrange in circle
+      final angleStep = (2 * pi) / marbles.length;
+      for (int i = 0; i < marbles.length; i++) {
+        final angle = i * angleStep;
+        _positionMarble(marbles[i], center, radius, angle);
+      }
+    }
+  }
+
+  /// Position a marble at a specific angle around center
+  void _positionMarble(
+    Marble marble,
+    Vector2 center,
+    double radius,
+    double angle,
+  ) {
+    final targetX = center.x + radius * cos(angle);
+    final targetY = center.y + radius * sin(angle);
+    final targetPosition = Vector2(targetX, targetY);
+
+    // Animate to target position
+    marble.add(
+      MoveToEffect(
+        targetPosition,
+        EffectController(duration: 0.2, curve: Curves.easeOut),
+      ),
+    );
+  }
+
+  /// Remove a marble from this group
+  void removeMarble(Marble marble) {
+    if (!marbles.contains(marble)) return;
+
+    marbles.remove(marble);
+    marble.currentGroup = null;
+
+    // Reset marble color to default
+    marble.animateColorTransition(marble.defaultColor);
+
+    // If only 1 marble remains, disband the group
+    if (marbles.length == 1) {
+      final lastMarble = marbles.first;
+      lastMarble.currentGroup = null;
+      lastMarble.animateColorTransition(lastMarble.defaultColor);
+      marbles.clear();
+      removeFromParent();
+      return;
+    }
+
+    // If group is empty, remove it
+    if (marbles.isEmpty) {
+      removeFromParent();
+      return;
+    }
+
+    // Rearrange remaining marbles into new pattern
+    _arrangeMarbles();
+
+    // Rebuild connection lines
+    _rebuildConnectionLines();
+  }
+
+  /// Rebuild connection lines based on current marble positions
+  void _rebuildConnectionLines() {
+    _connectionLines.clear();
+
+    if (marbles.length < 2) return;
+
+    // Calculate center point of all marbles
+    final center = _calculateGroupCenter();
+
+    // Create lines from center to each marble
+    for (final marble in marbles) {
+      _connectionLines.add(
+        _ConnectionLine(
+          start: center,
+          end: marble.position.clone(),
+          color: groupColor.withOpacity(0.6),
+        ),
+      );
+    }
+
+    _linesAnimated = false;
+  }
+
+  /// Calculate the geometric center of all marbles in the group
+  Vector2 _calculateGroupCenter() {
+    if (marbles.isEmpty) return Vector2.zero();
+
+    Vector2 sum = Vector2.zero();
+    for (final marble in marbles) {
+      sum += marble.position;
+    }
+    return sum / marbles.length.toDouble();
+  }
+
+  /// Animate connection lines appearing sequentially
+  void _animateLines() {
+    _linesAnimated = false;
+
+    // Sequential animation: 100ms per line
+    final totalDuration = _connectionLines.length * 0.1;
+
+    // Use a simple timer effect instead of OpacityEffect
+    // since MarbleGroup doesn't implement OpacityProvider
+    add(
+      TimerComponent(
+        period: totalDuration,
+        removeOnFinish: true,
+        onTick: () {
+          _linesAnimated = true;
+        },
+      ),
+    );
+  }
+
+  /// Snap this group to a submit area
+  void snapToSubmitArea(SubmitArea area) {
+    assignedArea = area;
+    isSubmitted = true;
+
+    final snapPosition = area.snapPosition;
+
+    // Animate all marbles to maintain their relative positions
+    final center = _calculateGroupCenter();
+
+    for (final marble in marbles) {
+      final offset = marble.position - center;
+      final targetPosition = snapPosition + offset;
+
+      marble.add(
+        MoveToEffect(
+          targetPosition,
+          EffectController(duration: 0.3, curve: Curves.easeOut),
+        ),
+      );
+    }
+  }
+
+  /// Return this group to the play area (when answer is incorrect)
+  void returnToPlayArea() {
+    assignedArea = null;
+    isSubmitted = false;
+    isCorrect = null;
+
+    // Animate marbles back to a random position in play area
+    // This will be handled by the game controller
+  }
+
+  /// Check if a position is within this group's bounds
+  bool containsPosition(Vector2 position) {
+    for (final marble in marbles) {
+      if ((marble.position - position).length <= marble.radius) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Get the bounding box of this group
+  Rect getBoundingBox() {
+    if (marbles.isEmpty) return Rect.zero;
+
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = double.negativeInfinity;
+    double maxY = double.negativeInfinity;
+
+    for (final marble in marbles) {
+      final pos = marble.position;
+      final r = marble.radius;
+
+      minX = minX < pos.x - r ? minX : pos.x - r;
+      minY = minY < pos.y - r ? minY : pos.y - r;
+      maxX = maxX > pos.x + r ? maxX : pos.x + r;
+      maxY = maxY > pos.y + r ? maxY : pos.y + r;
+    }
+
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    // Update connection lines to follow marble positions
+    if (_linesAnimated && marbles.length >= 2) {
+      final center = _calculateGroupCenter();
+
+      for (int i = 0; i < marbles.length && i < _connectionLines.length; i++) {
+        _connectionLines[i].start = center;
+        _connectionLines[i].end = marbles[i].position.clone();
+      }
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // Render connection lines
+    if (_linesAnimated) {
+      for (final line in _connectionLines) {
+        line.render(canvas);
+      }
+    }
+  }
+}
+
+/// Represents a connection line between marbles
+class _ConnectionLine {
+  Vector2 start;
+  Vector2 end;
+  Color color;
+
+  _ConnectionLine({
+    required this.start,
+    required this.end,
+    required this.color,
+  });
+
+  void render(Canvas canvas) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(Offset(start.x, start.y), Offset(end.x, end.y), paint);
+  }
+}
