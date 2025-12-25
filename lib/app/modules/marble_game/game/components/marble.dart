@@ -30,7 +30,7 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
        defaultColor = color ?? MyColor.primary;
 
   @override
-  bool get debugMode => true;
+  bool get debugMode => false;
 
   @override
   Future<void> onLoad() async {
@@ -72,6 +72,11 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
 
   /// Play merge animation (bounce effect)
   void playMergeAnimation() {
+    // Remove any existing scale effects to prevent conflicts
+    children.whereType<ScaleEffect>().forEach(
+      (effect) => effect.removeFromParent(),
+    );
+
     add(
       SequenceEffect([
         ScaleEffect.to(
@@ -118,17 +123,45 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     super.onDragStart(event);
     isDragging = true;
 
-    // Visual feedback: slight scale increase
-    add(ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)));
-
-    // Bring to front (higher priority)
-    priority = 100;
-
-    // If in a group, bring all group marbles to front
+    // If in a group, apply scale to all group marbles
     if (currentGroup != null) {
       for (final marble in currentGroup!.marbles) {
+        // Remove any existing scale effects
+        marble.children.whereType<ScaleEffect>().toList().forEach(
+          (effect) => effect.removeFromParent(),
+        );
+        marble.children.whereType<SequenceEffect>().toList().forEach(
+          (effect) => effect.removeFromParent(),
+        );
+
+        // Reset scale to 1.0 first
+        marble.scale = Vector2.all(1.0);
+
+        // Apply drag scale to all marbles in group
+        marble.add(
+          ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)),
+        );
+
+        // Bring to front
         marble.priority = 100;
       }
+    } else {
+      // Single marble: remove existing effects
+      children.whereType<ScaleEffect>().toList().forEach(
+        (effect) => effect.removeFromParent(),
+      );
+      children.whereType<SequenceEffect>().toList().forEach(
+        (effect) => effect.removeFromParent(),
+      );
+
+      // Reset scale to 1.0 first, then apply drag scale
+      scale = Vector2.all(1.0);
+
+      // Visual feedback: slight scale increase
+      add(ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)));
+
+      // Bring to front (higher priority)
+      priority = 100;
     }
   }
 
@@ -155,15 +188,31 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     super.onDragEnd(event);
     isDragging = false;
 
-    // Reset scale
-    add(ScaleEffect.to(Vector2.all(1.0), EffectController(duration: 0.1)));
-
-    // Reset priority for this marble and all group marbles
-    priority = 0;
+    // If in a group, reset scale for all group marbles
     if (currentGroup != null) {
       for (final marble in currentGroup!.marbles) {
+        // Remove any existing scale effects
+        marble.children.whereType<ScaleEffect>().toList().forEach(
+          (effect) => effect.removeFromParent(),
+        );
+
+        // Reset scale to 1.0 immediately
+        marble.scale = Vector2.all(1.0);
+
+        // Reset priority
         marble.priority = 0;
       }
+    } else {
+      // Single marble: remove existing effects
+      children.whereType<ScaleEffect>().toList().forEach(
+        (effect) => effect.removeFromParent(),
+      );
+
+      // Reset scale to 1.0 immediately
+      scale = Vector2.all(1.0);
+
+      // Reset priority
+      priority = 0;
     }
   }
 

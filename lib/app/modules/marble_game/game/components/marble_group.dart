@@ -24,7 +24,10 @@ class MarbleGroup extends Component {
   MarbleGroup({
     this.groupColor = const Color(0xFF64B5F6), // Soft blue default
     this.proximityThreshold = 40.0,
-  });
+  }) {
+    // Set priority to 1 to ensure connection lines render above marbles
+    priority = 1;
+  }
 
   /// Add a marble to this group with animation
   void addMarble(Marble marble) {
@@ -49,12 +52,12 @@ class MarbleGroup extends Component {
     _animateLines();
   }
 
-  /// Arrange marbles in a circular pattern around center
+  /// Arrange marbles in radial pattern (all in circle)
   void _arrangeMarbles() {
     if (marbles.isEmpty) return;
 
     final center = _calculateGroupCenter();
-    final radius = 25.0; // Distance from center
+    final radius = 30.0; // Distance from center
 
     if (marbles.length == 1) {
       // Single marble stays at its position
@@ -66,7 +69,7 @@ class MarbleGroup extends Component {
       _positionMarble(marbles[0], center, radius, angle1);
       _positionMarble(marbles[1], center, radius, angle2);
     } else {
-      // Multiple marbles: arrange in circle
+      // All marbles arranged in circle (radial layout)
       final angleStep = (2 * pi) / marbles.length;
       for (int i = 0; i < marbles.length; i++) {
         final angle = i * angleStep;
@@ -126,26 +129,32 @@ class MarbleGroup extends Component {
 
     // Rebuild connection lines
     _rebuildConnectionLines();
+
+    // Animate lines to make them visible
+    _animateLines();
   }
 
   /// Rebuild connection lines based on current marble positions
+  /// Creates a Complete Graph (Kn) - all marbles connected to all others
   void _rebuildConnectionLines() {
     _connectionLines.clear();
 
     if (marbles.length < 2) return;
 
-    // Calculate center point of all marbles
-    final center = _calculateGroupCenter();
-
-    // Create lines from center to each marble
-    for (final marble in marbles) {
-      _connectionLines.add(
-        _ConnectionLine(
-          start: center,
-          end: marble.position.clone(),
-          color: groupColor.withOpacity(0.6),
-        ),
-      );
+    // Fully connected: every marble connects to every other marble
+    // This creates a Complete Graph (Kn) with n(n-1)/2 edges
+    for (int i = 0; i < marbles.length; i++) {
+      for (int j = i + 1; j < marbles.length; j++) {
+        _connectionLines.add(
+          _ConnectionLine(
+            start: marbles[i].position.clone(),
+            end: marbles[j].position.clone(),
+            color: Colors.white.withOpacity(
+              0.4,
+            ), // More transparent for dense mesh
+          ),
+        );
+      }
     }
 
     _linesAnimated = false;
@@ -251,13 +260,19 @@ class MarbleGroup extends Component {
   void update(double dt) {
     super.update(dt);
 
-    // Update connection lines to follow marble positions
+    // Update connection lines to follow marble positions in real-time
     if (_linesAnimated && marbles.length >= 2) {
-      final center = _calculateGroupCenter();
-
-      for (int i = 0; i < marbles.length && i < _connectionLines.length; i++) {
-        _connectionLines[i].start = center;
-        _connectionLines[i].end = marbles[i].position.clone();
+      // Rebuild all connections to match current marble positions
+      // This ensures lines follow marbles during drag
+      int lineIndex = 0;
+      for (int i = 0; i < marbles.length; i++) {
+        for (int j = i + 1; j < marbles.length; j++) {
+          if (lineIndex < _connectionLines.length) {
+            _connectionLines[lineIndex].start = marbles[i].position.clone();
+            _connectionLines[lineIndex].end = marbles[j].position.clone();
+            lineIndex++;
+          }
+        }
       }
     }
   }

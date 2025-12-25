@@ -256,17 +256,11 @@ class MarbleFlame extends FlameGame {
 
   /// Create a new group with two marbles
   void createNewGroup(Marble marble1, Marble marble2) {
-    // Choose a color for the new group
-    final groupColors = [
-      const Color(0xFF64B5F6), // Soft blue
-      const Color(0xFF81C784), // Soft green
-      const Color(0xFFBA68C8), // Soft purple
-      const Color(0xFFFFB74D), // Soft orange
-    ];
-    final colorIndex = groups.length % groupColors.length;
+    // All groups use soft red color
+    const groupColor = Color(0xFFEF5350); // Soft red
 
     final newGroup = MarbleGroup(
-      groupColor: groupColors[colorIndex],
+      groupColor: groupColor,
       proximityThreshold: proximityThreshold,
     );
 
