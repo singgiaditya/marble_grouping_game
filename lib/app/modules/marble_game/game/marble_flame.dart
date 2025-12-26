@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
@@ -101,46 +100,6 @@ class MarbleFlame extends FlameGame {
     addAll(submitAreas);
   }
 
-  /// Update marble count with animation
-  void updateMarbles(int count) {
-    _positioningService.clearOccupiedPositions();
-
-    final currentMarbles = children.whereType<Marble>().toList();
-
-    _animationService.updateMarblesWithAnimation(
-      currentMarbles: currentMarbles,
-      groups: groups,
-      targetCount: count,
-      onCenterAnimationComplete: (targetCount) {
-        _handleCenterAnimationComplete(targetCount);
-      },
-    );
-
-    // Update total marbles for validation
-    targetGroupSize = count ~/ 3;
-    totalMarbles = count;
-  }
-
-  /// Handle completion of center animation
-  void _handleCenterAnimationComplete(int targetCount) {
-    final currentMarbles = children.whereType<Marble>().toList();
-    final center = _animationService.centerPosition;
-
-    // Animate existing marbles to center
-    _animationService.animateMarblesToCenter(currentMarbles);
-
-    // Wait for center animation, then adjust count
-    add(
-      TimerComponent(
-        period: GameConstants.moveToCenterDuration + 0.1,
-        removeOnFinish: true,
-        onTick: () {
-          _adjustMarbleCount(targetCount, center);
-        },
-      ),
-    );
-  }
-
   /// Adjust marble count (add or remove marbles)
   void _adjustMarbleCount(int targetCount, Vector2 center) {
     final currentMarbles = children.whereType<Marble>().toList();
@@ -157,6 +116,13 @@ class MarbleFlame extends FlameGame {
         add(marble);
       }
     }
+  }
+
+  void updateMarbles(int targetGroupSize, int totalMarbles) {
+    this.targetGroupSize = targetGroupSize;
+    this.totalMarbles = totalMarbles;
+
+    _validationService.update(targetGroupSize, submitAreas);
   }
 
   /// Detach all marbles from their groups with staggered animation
@@ -223,25 +189,6 @@ class MarbleFlame extends FlameGame {
   /// Check if a marble can merge into a group
   bool canMergeIntoGroup(Marble marble, MarbleGroup group) {
     return _groupingService.canMergeIntoGroup(marble, group);
-  }
-
-  /// Validate answer when "Check Answer" button is clicked
-  void onCheckAnswerClicked() {
-    final isCorrect = _validationService.validateSubmitAreas();
-
-    if (isCorrect) {
-      Get.log('Correct! All groups have the right size.');
-      onAnswerValidated?.call(true);
-    } else {
-      Get.log('Incorrect. Try again!');
-      returnGroupsToPlayArea();
-      onAnswerValidated?.call(false);
-    }
-  }
-
-  /// Validate that all 3 submit areas have groups of the correct size
-  bool validateSubmitAreas() {
-    return _validationService.validateSubmitAreas();
   }
 
   /// Return groups to play area when answer is incorrect

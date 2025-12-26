@@ -1,33 +1,22 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:get/get.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/constants/game_constants.dart';
 
 /// Service responsible for game validation and answer checking
 class GameValidationService {
-  final int targetGroupSize;
-  final List<dynamic> submitAreas;
+  int targetGroupSize;
+  List<dynamic> submitAreas;
 
   GameValidationService({
     required this.targetGroupSize,
     required this.submitAreas,
   });
 
-  /// Validate that all 3 submit areas have groups of the correct size
-  bool validateSubmitAreas() {
-    // Check that all 3 areas have a group
-    for (final area in submitAreas) {
-      if (area.assignedGroup == null) {
-        return false;
-      }
-
-      // Check that each group has the correct number of marbles
-      if (area.assignedGroup!.marbles.length != targetGroupSize) {
-        return false;
-      }
-    }
-
-    return true;
+  void update(int targetGroupSize, List<dynamic> submitAreas) {
+    this.targetGroupSize = targetGroupSize;
+    this.submitAreas = submitAreas;
   }
 
   /// Check if answer is correct
@@ -36,6 +25,7 @@ class GameValidationService {
     // Check if all 3 areas have groups
     for (final area in submitAreas) {
       if (area.assignedGroup == null) {
+        Get.log('Missing group in one or more areas');
         return false; // Missing group in one or more areas
       }
     }
@@ -44,10 +34,12 @@ class GameValidationService {
     for (final area in submitAreas) {
       final group = area.assignedGroup!;
       if (group.marbles.length != targetGroupSize) {
+        Get.log('Wrong count: ${group.marbles.length} != $targetGroupSize');
         return false; // Wrong count
       }
     }
 
+    Get.log('All correct!');
     return true; // All correct!
   }
 

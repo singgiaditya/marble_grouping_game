@@ -60,8 +60,8 @@ class MarbleGameController extends GetxController {
         currentEquation.value = newEquation;
         isAnimating.value = false;
 
-        // Update target group size for validation
-        game?.targetGroupSize = newEquation.result;
+        // Update target group and total marbles for validation
+        game?.updateMarbles(newEquation.result, newEquation.result * 3);
 
         // Step 4: Spread marbles when animation completes
         game?.spreadMarbles(newEquation.result * 3);
