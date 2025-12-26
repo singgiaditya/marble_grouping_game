@@ -116,25 +116,40 @@ class MarbleFlame extends FlameGame {
     totalMarbles = count;
   }
 
+  /// Detach all marbles from their groups with staggered animation
+  void detachAllGroups() {
+    final List<Marble> marblesToDetach = [];
+    for (final group in groups) {
+      marblesToDetach.addAll(group.marbles.toList());
+    }
+
+    if (marblesToDetach.isEmpty) return;
+
+    for (int i = 0; i < marblesToDetach.length; i++) {
+      final marble = marblesToDetach[i];
+      final delay = i * 0.05; // 50ms between each detachment
+
+      add(
+        TimerComponent(
+          period: delay,
+          removeOnFinish: true,
+          onTick: () {
+            if (marble.currentGroup != null) {
+              marble.currentGroup!.removeMarble(marble);
+            }
+          },
+        ),
+      );
+    }
+  }
+
   /// Animate all marbles to center and adjust count
   void animateMarblesToCenter(int count) {
     final marbles = children.whereType<Marble>().toList();
     final center = Vector2(size.x / 2, size.y / 2);
 
-    // First, adjust marble count immediately if needed
-    if (marbles.length < count) {
-      // Add new marbles at center immediately
-      for (int i = marbles.length; i < count; i++) {
-        final marble = Marble(radius: marbleRadius())..position = center;
-        add(marble);
-      }
-    }
-
-    // Get updated marble list
-    final allMarbles = children.whereType<Marble>().toList();
-
-    // Animate all marbles to center
-    for (final marble in allMarbles) {
+    // Animate existing marbles to center first (don't add new ones yet)
+    for (final marble in marbles) {
       marble.add(
         MoveToEffect(
           center,
@@ -155,6 +170,12 @@ class MarbleFlame extends FlameGame {
           if (currentMarbles.length > count) {
             for (int i = count; i < currentMarbles.length; i++) {
               remove(currentMarbles[i]);
+            }
+          } else if (currentMarbles.length < count) {
+            // Add new marbles at center (creates illusion)
+            for (int i = currentMarbles.length; i < count; i++) {
+              final marble = Marble(radius: marbleRadius())..position = center;
+              add(marble);
             }
           }
         },

@@ -40,8 +40,13 @@ class MarbleGameController extends GetxController {
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
 
-    // Start center animation immediately
-    game?.animateMarblesToCenter(newEquation.result * 3);
+    // Detach all groups first
+    game?.detachAllGroups();
+
+    // After detach completes (~0.7s), animate to center
+    Future.delayed(Duration(milliseconds: 700), () {
+      game?.animateMarblesToCenter(newEquation.result * 3);
+    });
 
     // start animation
     int elapsed = 0;
