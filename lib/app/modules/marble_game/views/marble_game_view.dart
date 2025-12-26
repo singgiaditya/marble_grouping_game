@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:flame/game.dart';
 import 'package:marble_grouping_game/app/common/widgets/shadow_button.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
-import 'package:marble_grouping_game/app/core/themes/style/shadow_style.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/widgets/equation_card.dart';
 
 import '../controllers/marble_game_controller.dart';
 
@@ -37,67 +37,7 @@ class GameView extends GetView<MarbleGameController> {
                   ),
                 ),
                 SizedBox(height: 24),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(
-                        left: Get.width * 0.1,
-                        right: Get.width * 0.1,
-                        bottom: 32,
-                      ),
-                      padding: EdgeInsets.all(16),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: MyColor.primary,
-                        border: Border.all(color: MyColor.secondary, width: 2),
-                        boxShadow: [
-                          ShadowStyle.defaultShadow.copyWith(
-                            color: MyColor.secondary,
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Obx(
-                          () => Text(
-                            "${controller.currentEquation.value.a} ÷ ${controller.currentEquation.value.b}",
-                            style: Get.textTheme.displayLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 40,
-                      top: -10,
-                      child: IconButton(
-                        style: IconButton.styleFrom(
-                          backgroundColor: MyColor.accent,
-                          shadowColor: MyColor.secondary,
-                          elevation: 4,
-                        ),
-                        onPressed: controller.generateNewEquation,
-                        icon: Icon(Icons.refresh, color: MyColor.secondary),
-                      ),
-                    ),
-                    Positioned(
-                      right: Get.width * 0.4,
-                      bottom: 10,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 40),
-                        decoration: BoxDecoration(
-                          color: MyColor.secondary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text("=", style: Get.textTheme.headlineLarge),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                EquationCard(),
               ],
             ),
             Expanded(

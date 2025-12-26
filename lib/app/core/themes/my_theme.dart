@@ -19,6 +19,7 @@ class MyTheme {
     scaffoldBackgroundColor: MyColor.background,
     textTheme: TextTheme(
       displayLarge: TextStyle(color: MyColor.textPrimary),
+      displayMedium: TextStyle(color: MyColor.textPrimary),
       headlineLarge: TextStyle(color: MyColor.textPrimary),
       titleLarge: TextStyle(color: MyColor.textPrimary),
       bodyLarge: TextStyle(color: MyColor.textPrimary),

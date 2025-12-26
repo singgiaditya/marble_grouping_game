@@ -16,13 +16,6 @@ class MarbleGameController extends GetxController {
   final int _animationStep = 100; // update every 100ms
 
   @override
-  void onInit() {
-    super.onInit();
-    // Don't generate equation here - wait for game to be ready
-    // UI will trigger first equation generation
-  }
-
-  @override
   void onClose() {
     _animationTimer?.cancel();
     super.onClose();
