@@ -244,9 +244,4 @@ class MarbleFlame extends FlameGame {
   void shakeWrongGroups() {
     _validationService.shakeWrongGroups();
   }
-
-  /// Stop shaking all groups
-  void stopShakingGroups() {
-    _validationService.stopShakingGroups();
-  }
 }
