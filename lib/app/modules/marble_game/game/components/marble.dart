@@ -7,7 +7,7 @@ import 'package:marble_grouping_game/app/modules/marble_game/game/components/mar
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
 
-class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
+class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
   // Group membership
   MarbleGroup? currentGroup;
 
@@ -17,11 +17,6 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
 
   // Drag state
   bool isDragging = false;
-
-  // Double-tap detection
-  int _tapCount = 0;
-  double? _tapTimer;
-  static const _doubleTapWindow = 0.3; // seconds
 
   Marble({
     super.position,
@@ -330,26 +325,16 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   }
 
   @override
-  void onTapDown(TapDownEvent event) {
-    super.onTapDown(event);
+  void onDoubleTapDown(DoubleTapDownEvent event) {
+    super.onDoubleTapDown(event);
 
-    // Prevent tap during reset animation
+    // Prevent double-tap during reset animation
     final game = findParent<MarbleFlame>();
     if (game != null && game.isResetting) {
-      return; // Don't allow tap during reset
+      return; // Don't allow double-tap during reset
     }
 
-    _tapCount++;
-
-    // Reset timer
-    _tapTimer = _doubleTapWindow;
-
-    if (_tapCount == 2) {
-      // Double-tap detected
-      _handleDoubleTap();
-      _tapCount = 0;
-      _tapTimer = null;
-    }
+    _handleDoubleTap();
   }
 
   void _handleDoubleTap() {
@@ -361,20 +346,6 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     // Detach from group on double-tap
     if (currentGroup != null) {
       detachFromGroup();
-    }
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-
-    // Update tap timer
-    if (_tapTimer != null) {
-      _tapTimer = _tapTimer! - dt;
-      if (_tapTimer! <= 0) {
-        _tapTimer = null;
-        _tapCount = 0;
-      }
     }
   }
 }
