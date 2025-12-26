@@ -3,6 +3,7 @@ import 'package:marble_grouping_game/app/core/utils/equation_generator.dart';
 import 'package:marble_grouping_game/app/data/models/equation_model.dart';
 import 'dart:async';
 import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/widgets/result_overlay.dart';
 
 class MarbleGameController extends GetxController {
   final EquationGenerator equationGenerator = EquationGenerator();
@@ -66,6 +67,9 @@ class MarbleGameController extends GetxController {
         currentEquation.value = newEquation;
         isAnimating.value = false;
 
+        // Update target group size for validation
+        game?.targetGroupSize = newEquation.result;
+
         // Step 4: Spread marbles when animation completes
         game?.spreadMarbles(newEquation.result * 3);
 
@@ -83,6 +87,36 @@ class MarbleGameController extends GetxController {
         );
       }
     });
+  }
+
+  /// Check answer and show result overlay
+  void checkAnswer() {
+    if (game == null) return;
+
+    // Prevent checking during reset
+    if (game!.isResetting || isAnimating.value) return;
+
+    final isCorrect = game!.checkAnswer();
+
+    // Show result overlay
+    _showResultOverlay(isCorrect);
+  }
+
+  /// Show result overlay with animation
+  void _showResultOverlay(bool isCorrect) {
+    Get.dialog(
+      ResultOverlay(
+        isCorrect: isCorrect,
+        onContinue: () {
+          Get.back(); // Close overlay
+          if (isCorrect) {
+            // Generate new equation on correct answer
+            generateNewEquation();
+          }
+        },
+      ),
+      barrierDismissible: false,
+    );
   }
 
   int _getRandomNumber(int min, int max) {

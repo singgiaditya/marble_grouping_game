@@ -458,4 +458,25 @@ class MarbleFlame extends FlameGame {
       }
     }
   }
+
+  /// Check if answer is correct
+  /// Returns true if all 3 submit areas have groups with correct count
+  bool checkAnswer() {
+    // Check if all 3 areas have groups
+    for (final area in submitAreas) {
+      if (area.assignedGroup == null) {
+        return false; // Missing group in one or more areas
+      }
+    }
+
+    // Check if all groups have the correct count (targetGroupSize)
+    for (final area in submitAreas) {
+      final group = area.assignedGroup!;
+      if (group.marbles.length != targetGroupSize) {
+        return false; // Wrong count
+      }
+    }
+
+    return true; // All correct!
+  }
 }

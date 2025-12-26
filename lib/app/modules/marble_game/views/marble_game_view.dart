@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 import 'package:flame/game.dart';
-import 'package:marble_grouping_game/app/common/widgets/success_buton.dart';
+import 'package:marble_grouping_game/app/common/widgets/shadow_button.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/core/themes/style/shadow_style.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
@@ -115,7 +115,10 @@ class GameView extends GetView<MarbleGameController> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: SuccessButon(),
+              child: ShadowButton(
+                "Check Answer",
+                onTap: controller.checkAnswer,
+              ),
             ),
           ],
         ),
