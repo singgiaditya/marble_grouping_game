@@ -479,4 +479,55 @@ class MarbleFlame extends FlameGame {
 
     return true; // All correct!
   }
+
+  /// Shake wrong groups to indicate error
+  void shakeWrongGroups() {
+    for (final area in submitAreas) {
+      if (area.assignedGroup != null) {
+        final group = area.assignedGroup!;
+        // Shake if count is wrong
+        if (group.marbles.length != targetGroupSize) {
+          _shakeGroup(group);
+        }
+      }
+    }
+  }
+
+  /// Apply continuous shake animation to a group
+  void _shakeGroup(MarbleGroup group) {
+    // Add repeating shake effect to each marble in the group
+    for (final marble in group.marbles) {
+      // Remove any existing shake effects
+      marble.children.whereType<SequenceEffect>().forEach((effect) {
+        effect.removeFromParent();
+      });
+
+      // Add continuous shake effect
+      final shakeEffect = SequenceEffect([
+        MoveEffect.by(Vector2(3, 0), EffectController(duration: 0.1)),
+        MoveEffect.by(Vector2(-6, 0), EffectController(duration: 0.1)),
+        MoveEffect.by(Vector2(6, 0), EffectController(duration: 0.1)),
+        MoveEffect.by(Vector2(-3, 0), EffectController(duration: 0.1)),
+      ], repeatCount: 3); // Repeat 3 times
+
+      marble.add(shakeEffect);
+    }
+  }
+
+  /// Stop shaking all groups
+  void stopShakingGroups() {
+    for (final area in submitAreas) {
+      if (area.assignedGroup != null) {
+        final group = area.assignedGroup!;
+        for (final marble in group.marbles) {
+          // Remove shake effects
+          marble.children.whereType<SequenceEffect>().toList().forEach((
+            effect,
+          ) {
+            effect.removeFromParent();
+          });
+        }
+      }
+    }
+  }
 }

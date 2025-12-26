@@ -109,9 +109,15 @@ class MarbleGameController extends GetxController {
         isCorrect: isCorrect,
         onContinue: () {
           Get.back(); // Close overlay
+
           if (isCorrect) {
             // Generate new equation on correct answer
             generateNewEquation();
+          } else {
+            // Shake wrong groups AFTER overlay closes (more visible)
+            Future.delayed(Duration(milliseconds: 300), () {
+              game?.shakeWrongGroups();
+            });
           }
         },
       ),
