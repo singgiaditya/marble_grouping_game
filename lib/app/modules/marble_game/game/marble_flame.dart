@@ -26,8 +26,8 @@ class MarbleFlame extends FlameGame {
   final List<MarbleGroup> groups = [];
 
   // Game configuration
-  int targetGroupSize = 4; // The result of division (e.g., 12 ÷ 3 = 4)
-  int totalMarbles = 12; // result × 3
+  late int targetGroupSize; // The result of division (e.g., 12 ÷ 3 = 4)
+  late int totalMarbles; // result × 3
 
   // Submit areas
   late final List<SubmitArea> submitAreas;
@@ -117,6 +117,7 @@ class MarbleFlame extends FlameGame {
     );
 
     // Update total marbles for validation
+    targetGroupSize = count ~/ 3;
     totalMarbles = count;
   }
 
