@@ -54,7 +54,7 @@ class EquationCard extends GetView<MarbleGameController> {
           ),
         ),
         Positioned(
-          left: (Get.width * 0.45) - horizontalMargin,
+          left: (Get.width * 0.5) - horizontalMargin,
           bottom: 0,
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 50),
