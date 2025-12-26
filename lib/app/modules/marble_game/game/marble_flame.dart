@@ -29,6 +29,9 @@ class MarbleFlame extends FlameGame {
   // Validation callback
   Function(bool isCorrect)? onAnswerValidated;
 
+  // Reset state - prevents interaction during reset animation
+  bool isResetting = false;
+
   @override
   Color backgroundColor() => const Color(0x00000000);
 

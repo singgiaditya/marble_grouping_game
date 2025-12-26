@@ -129,6 +129,13 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
+
+    // Prevent drag during reset animation
+    final game = findParent<MarbleFlame>();
+    if (game != null && game.isResetting) {
+      return; // Don't allow drag during reset
+    }
+
     isDragging = true;
 
     // If in a group, apply scale to all group marbles
@@ -325,6 +332,12 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
+
+    // Prevent tap during reset animation
+    final game = findParent<MarbleFlame>();
+    if (game != null && game.isResetting) {
+      return; // Don't allow tap during reset
+    }
 
     _tapCount++;
 

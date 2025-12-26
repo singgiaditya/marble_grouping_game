@@ -40,10 +40,13 @@ class MarbleGameController extends GetxController {
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
 
+    // Lock marble interactions during reset
+    game?.isResetting = true;
+
     // Clear all submit areas first (unsubmit groups)
     game?.clearAllSubmitAreas();
 
-    // Detach all groups first
+    // Detach all groups
     game?.detachAllGroups();
 
     // After detach completes (~0.7s), animate to center
@@ -51,7 +54,7 @@ class MarbleGameController extends GetxController {
       game?.animateMarblesToCenter(newEquation.result * 3);
     });
 
-    // start animation
+    // Step 3: Start equation randomize animation
     int elapsed = 0;
     _animationTimer = Timer.periodic(Duration(milliseconds: _animationStep), (
       timer,
@@ -63,8 +66,13 @@ class MarbleGameController extends GetxController {
         currentEquation.value = newEquation;
         isAnimating.value = false;
 
-        // Spread marbles when animation completes
+        // Step 4: Spread marbles when animation completes
         game?.spreadMarbles(newEquation.result * 3);
+
+        // Unlock marble interactions after spread completes (~1s)
+        Future.delayed(Duration(milliseconds: 1100), () {
+          game?.isResetting = false;
+        });
 
         timer.cancel();
       } else {
