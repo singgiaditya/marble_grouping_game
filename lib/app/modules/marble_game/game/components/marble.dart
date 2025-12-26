@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/constants/game_constants.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/helpers/marble_animation_helper.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
 
+/// Represents a single marble in the game
 class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
   // Group membership
   MarbleGroup? currentGroup;
@@ -20,7 +23,7 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
 
   Marble({
     super.position,
-    super.radius = 10,
+    super.radius = GameConstants.defaultMarbleRadius,
     super.anchor = Anchor.center,
     Color? color,
   }) : currentColor = color ?? MyColor.primary,
@@ -32,15 +35,16 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    _updatePaint();
+    updatePaintLayers();
   }
 
-  void _updatePaint({Color? borderColor}) {
+  /// Update paint layers with current colors
+  void updatePaintLayers({Color? borderColor}) {
     paintLayers = [
       Paint()
         ..color = borderColor ?? MyColor.secondary
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4,
+        ..strokeWidth = GameConstants.marbleBorderWidth,
       Paint()
         ..color = currentColor
         ..style = PaintingStyle.fill,
@@ -50,48 +54,17 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
   /// Change marble color (used when submitting to area)
   void changeColor(Color newColor, {Color? borderColor}) {
     currentColor = newColor;
-    _updatePaint(borderColor: borderColor);
+    updatePaintLayers(borderColor: borderColor);
   }
 
   /// Animate color transition to target color
   void animateColorTransition(Color targetColor) {
-    // Remove any existing color effects
-    children.whereType<ColorEffect>().forEach(
-      (effect) => effect.removeFromParent(),
-    );
-
-    add(
-      ColorEffect(
-        targetColor,
-        EffectController(duration: 0.3, curve: Curves.easeInOut),
-        opacityTo: 1.0,
-        onComplete: () {
-          currentColor = targetColor;
-          _updatePaint();
-        },
-      ),
-    );
+    MarbleAnimationHelper.animateColorTransition(this, targetColor);
   }
 
   /// Play merge animation (bounce effect)
   void playMergeAnimation() {
-    // Remove any existing scale effects to prevent conflicts
-    children.whereType<ScaleEffect>().forEach(
-      (effect) => effect.removeFromParent(),
-    );
-
-    add(
-      SequenceEffect([
-        ScaleEffect.to(
-          Vector2.all(1.2),
-          EffectController(duration: 0.1, curve: Curves.easeOut),
-        ),
-        ScaleEffect.to(
-          Vector2.all(1.0),
-          EffectController(duration: 0.1, curve: Curves.easeIn),
-        ),
-      ]),
-    );
+    MarbleAnimationHelper.playMergeAnimation(this);
   }
 
   /// Detach from current group
@@ -115,7 +88,10 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
       add(
         MoveToEffect(
           pushTarget,
-          EffectController(duration: 0.2, curve: Curves.easeOut),
+          EffectController(
+            duration: GameConstants.detachAnimationDuration,
+            curve: Curves.easeOut,
+          ),
         ),
       );
     }
@@ -128,52 +104,32 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
     // Prevent drag during reset animation
     final game = findParent<MarbleFlame>();
     if (game != null && game.isResetting) {
-      return; // Don't allow drag during reset
+      return;
     }
 
     isDragging = true;
 
-    // If in a group, apply scale to all group marbles
+    // Handle group drag
     if (currentGroup != null) {
-      // Increase group priority so lines render above marbles
-      currentGroup!.priority = 101;
-
-      for (final marble in currentGroup!.marbles) {
-        // Remove ALL effects to prevent accumulation
-        marble.children.toList().forEach((child) {
-          if (child is ScaleEffect || child is SequenceEffect) {
-            child.removeFromParent();
-          }
-        });
-
-        // Force reset scale to 1.0
-        marble.scale = Vector2.all(1.0);
-
-        // Apply drag scale to all marbles in group
-        marble.add(
-          ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)),
-        );
-
-        // Bring to front
-        marble.priority = 100;
-      }
+      _handleGroupDragStart();
     } else {
-      // Single marble: remove ALL effects
-      children.toList().forEach((child) {
-        if (child is ScaleEffect || child is SequenceEffect) {
-          child.removeFromParent();
-        }
-      });
-
-      // Force reset scale to 1.0
-      scale = Vector2.all(1.0);
-
-      // Visual feedback: slight scale increase
-      add(ScaleEffect.to(Vector2.all(1.1), EffectController(duration: 0.1)));
-
-      // Bring to front (higher priority)
-      priority = 100;
+      _handleSingleDragStart();
     }
+  }
+
+  /// Handle drag start for grouped marble
+  void _handleGroupDragStart() {
+    // Increase group priority so lines render above marbles
+    currentGroup!.priority = GameConstants.groupDraggingPriority;
+
+    for (final marble in currentGroup!.marbles) {
+      MarbleAnimationHelper.applyDragScale(marble);
+    }
+  }
+
+  /// Handle drag start for single marble
+  void _handleSingleDragStart() {
+    MarbleAnimationHelper.applyDragScale(this);
   }
 
   @override
@@ -203,25 +159,7 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
     if (currentGroup != null &&
         currentGroup!.isSubmitted &&
         currentGroup!.assignedArea != null) {
-      final area = currentGroup!.assignedArea!;
-
-      // Check if dragged far enough to unsubmit
-      final groupCenter = currentGroup!.calculateGroupCenter();
-      final areaCenter = area.snapPosition;
-      final distance = (groupCenter - areaCenter).length;
-
-      const double unsubmitThreshold = 80.0; // Distance to trigger unsubmit
-
-      if (distance > unsubmitThreshold) {
-        // Unsubmit the group
-        _unsubmitGroup();
-      } else {
-        // Bounce back to submit area
-        _bounceBackToArea(area);
-      }
-
-      // Reset scale effects
-      _resetScaleEffects();
+      _handleSubmittedGroupDragEnd();
       return;
     }
 
@@ -231,6 +169,26 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
     }
 
     // Reset scale effects
+    _resetScaleEffects();
+  }
+
+  /// Handle drag end for submitted groups
+  void _handleSubmittedGroupDragEnd() {
+    final area = currentGroup!.assignedArea!;
+
+    // Check if dragged far enough to unsubmit
+    final groupCenter = currentGroup!.calculateGroupCenter();
+    final areaCenter = area.snapPosition;
+    final distance = (groupCenter - areaCenter).length;
+
+    if (distance > GameConstants.unsubmitThreshold) {
+      // Unsubmit the group
+      _unsubmitGroup();
+    } else {
+      // Bounce back to submit area
+      _bounceBackToArea(area);
+    }
+
     _resetScaleEffects();
   }
 
@@ -265,8 +223,14 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
     for (final marble in currentGroup!.marbles) {
       marble.add(
         SequenceEffect([
-          ScaleEffect.to(Vector2.all(1.2), EffectController(duration: 0.1)),
-          ScaleEffect.to(Vector2.all(1.0), EffectController(duration: 0.1)),
+          ScaleEffect.to(
+            Vector2.all(GameConstants.mergeBounceScale),
+            EffectController(duration: GameConstants.bounceAnimationDuration),
+          ),
+          ScaleEffect.to(
+            Vector2.all(1.0),
+            EffectController(duration: GameConstants.bounceAnimationDuration),
+          ),
         ]),
       );
     }
@@ -274,38 +238,15 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
 
   /// Reset scale effects for all marbles in group or single marble
   void _resetScaleEffects() {
-    // If in a group, reset scale for all group marbles
     if (currentGroup != null) {
       // Reset group priority
-      currentGroup!.priority = 1;
+      currentGroup!.priority = GameConstants.connectionLinePriority;
 
       for (final marble in currentGroup!.marbles) {
-        // Remove ALL effects
-        marble.children.toList().forEach((child) {
-          if (child is ScaleEffect || child is SequenceEffect) {
-            child.removeFromParent();
-          }
-        });
-
-        // Force reset scale to 1.0
-        marble.scale = Vector2.all(1.0);
-
-        // Reset priority
-        marble.priority = 0;
+        MarbleAnimationHelper.resetScaleEffects(marble);
       }
     } else {
-      // Single marble: remove ALL effects
-      children.toList().forEach((child) {
-        if (child is ScaleEffect || child is SequenceEffect) {
-          child.removeFromParent();
-        }
-      });
-
-      // Force reset scale to 1.0
-      scale = Vector2.all(1.0);
-
-      // Reset priority
-      priority = 0;
+      MarbleAnimationHelper.resetScaleEffects(this);
     }
   }
 
@@ -331,16 +272,17 @@ class Marble extends CircleComponent with DragCallbacks, DoubleTapCallbacks {
     // Prevent double-tap during reset animation
     final game = findParent<MarbleFlame>();
     if (game != null && game.isResetting) {
-      return; // Don't allow double-tap during reset
+      return;
     }
 
     _handleDoubleTap();
   }
 
+  /// Handle double tap to detach from group
   void _handleDoubleTap() {
     // Prevent detach if group is submitted
     if (currentGroup != null && currentGroup!.isSubmitted) {
-      return; // Don't allow detach for submitted groups
+      return;
     }
 
     // Detach from group on double-tap

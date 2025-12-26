@@ -63,7 +63,7 @@ class ResultOverlay extends StatelessWidget {
                 // Title
                 Text(
                   isCorrect ? '🎉 Correct!' : '😢 Wrong!',
-                  style: Get.textTheme.displayLarge?.copyWith(
+                  style: Get.textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isCorrect ? MyColor.darkSuccess : MyColor.area1,
                   ),

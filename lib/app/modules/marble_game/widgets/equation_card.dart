@@ -9,13 +9,14 @@ class EquationCard extends GetView<MarbleGameController> {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalMargin = Get.width * 0.1;
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           margin: EdgeInsets.only(
-            left: Get.width * 0.1,
-            right: Get.width * 0.1,
+            left: horizontalMargin,
+            right: horizontalMargin,
             bottom: 32,
           ),
           padding: EdgeInsets.all(16),
@@ -40,7 +41,7 @@ class EquationCard extends GetView<MarbleGameController> {
           ),
         ),
         Positioned(
-          right: Get.width * 0.1,
+          right: horizontalMargin,
           top: -10,
           child: IconButton(
             style: IconButton.styleFrom(
@@ -53,7 +54,7 @@ class EquationCard extends GetView<MarbleGameController> {
           ),
         ),
         Positioned(
-          left: Get.width * 0.4,
+          left: (Get.width * 0.45) - horizontalMargin,
           bottom: 0,
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 50),

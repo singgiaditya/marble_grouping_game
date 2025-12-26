@@ -32,7 +32,10 @@ class GameView extends GetView<MarbleGameController> {
                   child: Center(
                     child: Text(
                       "Find Theresult of The Division",
-                      style: Get.textTheme.titleLarge,
+                      style: Get.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                      ),
                     ),
                   ),
                 ),

@@ -3,7 +3,10 @@ import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/constants/game_constants.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/strategies/marble_arrangement_strategy.dart';
 
+/// Submit area where marble groups can be placed for answer validation
 class SubmitArea extends PositionComponent {
   final Color bgColor;
   final Color shadowColor;
@@ -86,62 +89,39 @@ class SubmitArea extends PositionComponent {
 
   /// Show error effect when trying to submit to full area
   void _showErrorEffect() {
-    // Shake animation
     add(
       SequenceEffect([
-        MoveEffect.by(Vector2(5, 0), EffectController(duration: 0.05)),
-        MoveEffect.by(Vector2(-10, 0), EffectController(duration: 0.1)),
-        MoveEffect.by(Vector2(10, 0), EffectController(duration: 0.1)),
-        MoveEffect.by(Vector2(-5, 0), EffectController(duration: 0.05)),
+        MoveEffect.by(
+          Vector2(GameConstants.errorShakeDistance, 0),
+          EffectController(duration: GameConstants.errorShakeDuration),
+        ),
+        MoveEffect.by(
+          Vector2(-GameConstants.errorShakeDistance * 2, 0),
+          EffectController(duration: GameConstants.errorShakeDuration * 2),
+        ),
+        MoveEffect.by(
+          Vector2(GameConstants.errorShakeDistance * 2, 0),
+          EffectController(duration: GameConstants.errorShakeDuration * 2),
+        ),
+        MoveEffect.by(
+          Vector2(-GameConstants.errorShakeDistance, 0),
+          EffectController(duration: GameConstants.errorShakeDuration),
+        ),
       ]),
     );
   }
 
   /// Arrange marbles in balanced rows at right-center of submit area
   void arrangeMarblesInRows(MarbleGroup group) {
-    final marbles = group.marbles;
-    if (marbles.isEmpty) return;
+    final startPosition = Vector2(position.x + size.x, position.y + size.y / 2);
 
-    const double marbleSpacing = 25.0; // Space between marbles
-    const double rowSpacing = 25.0; // Space between rows
+    final strategy = RowArrangementStrategy(
+      startPosition: startPosition,
+      marbleSpacing: GameConstants.marbleSpacing,
+      rowSpacing: GameConstants.rowSpacing,
+    );
 
-    // Calculate optimal rows
-    final marbleCount = marbles.length;
-    int cols;
-
-    if (marbleCount <= 2) {
-      // 1 or 2 marbles: single row
-      cols = marbleCount;
-    } else if (marbleCount <= 4) {
-      // 3-4 marbles: 2 rows
-      cols = 2;
-    } else if (marbleCount <= 6) {
-      // 5-6 marbles: 2 rows
-      cols = 3;
-    } else {
-      // 7+ marbles: 3 rows
-      cols = (marbleCount / 3).ceil();
-    }
-
-    final rows = (marbleCount / cols).ceil();
-
-    // Calculate grid dimensions
-    final gridHeight = (rows - 1) * rowSpacing;
-
-    // Position at x = size.x, y = size.y / 2 (centered vertically at right edge)
-    final startX = position.x + size.x;
-    final startY = position.y + (size.y / 2) - (gridHeight / 2);
-
-    // Position each marble
-    for (int i = 0; i < marbles.length; i++) {
-      final row = i ~/ cols;
-      final col = i % cols;
-
-      final x = startX + col * marbleSpacing;
-      final y = startY + row * rowSpacing;
-
-      marbles[i].position = Vector2(x, y);
-    }
+    strategy.arrange(group.marbles, startPosition);
   }
 
   /// Highlight the area (visual feedback when group is hovering)
@@ -182,7 +162,7 @@ class SubmitArea extends PositionComponent {
       ..style = PaintingStyle.fill;
 
     _highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: GameConstants.highlightOpacity)
       ..style = PaintingStyle.fill;
 
     size = Vector2(size.x, size.y);
