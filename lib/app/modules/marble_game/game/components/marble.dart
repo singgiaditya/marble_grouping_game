@@ -40,10 +40,10 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     _updatePaint();
   }
 
-  void _updatePaint() {
+  void _updatePaint({Color? borderColor}) {
     paintLayers = [
       Paint()
-        ..color = MyColor.secondary
+        ..color = borderColor ?? MyColor.secondary
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4,
       Paint()
@@ -53,9 +53,9 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   }
 
   /// Change marble color (used when submitting to area)
-  void changeColor(Color newColor) {
+  void changeColor(Color newColor, {Color? borderColor}) {
     currentColor = newColor;
-    _updatePaint();
+    _updatePaint(borderColor: borderColor);
   }
 
   /// Animate color transition to target color

@@ -20,7 +20,7 @@ class SubmitArea extends PositionComponent {
   });
 
   @override
-  bool get debugMode => true;
+  bool get debugMode => false;
 
   late final Paint _shadowPaint;
   late final Paint _rectPaint;
@@ -75,8 +75,8 @@ class SubmitArea extends PositionComponent {
     // Hide connection lines
     group.hideConnectionLines();
 
-    // Change marble colors to match submit area
-    group.changeMarbleColors(bgColor);
+    // Change marble colors to match submit area (with shadow color for border)
+    group.changeMarbleColors(bgColor, borderColor: shadowColor);
 
     // Arrange marbles in rows at right-center of submit area
     arrangeMarblesInRows(group);
@@ -104,7 +104,6 @@ class SubmitArea extends PositionComponent {
 
     const double marbleSpacing = 25.0; // Space between marbles
     const double rowSpacing = 25.0; // Space between rows
-    const double rightMargin = 15.0; // Margin from right edge
 
     // Calculate optimal rows
     final marbleCount = marbles.length;
@@ -127,14 +126,11 @@ class SubmitArea extends PositionComponent {
     final rows = (marbleCount / cols).ceil();
 
     // Calculate grid dimensions
-    final gridWidth = (cols - 1) * marbleSpacing; // Space between marbles
     final gridHeight = (rows - 1) * rowSpacing;
 
-    // Position at right-center of submit area
-    // Right: position.x + size.x - gridWidth - rightMargin
-    // Center vertically: position.y + size.y/2 - gridHeight/2
-    final startX = position.x + size.x - gridWidth - rightMargin;
-    final startY = position.y + (size.y - gridHeight) / 2;
+    // Position at x = size.x, y = size.y / 2 (centered vertically at right edge)
+    final startX = position.x + size.x;
+    final startY = position.y + (size.y / 2) - (gridHeight / 2);
 
     // Position each marble
     for (int i = 0; i < marbles.length; i++) {
@@ -157,7 +153,7 @@ class SubmitArea extends PositionComponent {
   void render(Canvas canvas) {
     // Draw shadow
     final shadowRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(3, 4, size.x, size.y),
+      Rect.fromLTWH(6, 4, size.x, size.y),
       Radius.circular(radius),
     );
     canvas.drawRRect(shadowRect, _shadowPaint);

@@ -292,9 +292,9 @@ class MarbleGroup extends Component {
   }
 
   /// Change all marble colors to match submit area
-  void changeMarbleColors(Color newColor) {
+  void changeMarbleColors(Color newColor, {Color? borderColor}) {
     for (final marble in marbles) {
-      marble.changeColor(newColor);
+      marble.changeColor(newColor, borderColor: borderColor);
     }
   }
 
