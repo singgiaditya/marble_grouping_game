@@ -4,6 +4,8 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/marble_flame.dart';
 
 class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   // Group membership
@@ -48,6 +50,12 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
         ..color = currentColor
         ..style = PaintingStyle.fill,
     ];
+  }
+
+  /// Change marble color (used when submitting to area)
+  void changeColor(Color newColor) {
+    currentColor = newColor;
+    _updatePaint();
   }
 
   /// Animate color transition to target color
@@ -189,6 +197,81 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     super.onDragEnd(event);
     isDragging = false;
 
+    // Handle submitted group drag behavior
+    if (currentGroup != null &&
+        currentGroup!.isSubmitted &&
+        currentGroup!.assignedArea != null) {
+      final area = currentGroup!.assignedArea!;
+
+      // Check if dragged far enough to unsubmit
+      final groupCenter = currentGroup!.calculateGroupCenter();
+      final areaCenter = area.snapPosition;
+      final distance = (groupCenter - areaCenter).length;
+
+      const double unsubmitThreshold = 80.0; // Distance to trigger unsubmit
+
+      if (distance > unsubmitThreshold) {
+        // Unsubmit the group
+        _unsubmitGroup();
+      } else {
+        // Bounce back to submit area
+        _bounceBackToArea(area);
+      }
+
+      // Reset scale effects
+      _resetScaleEffects();
+      return;
+    }
+
+    // Check if group should be submitted to a submit area
+    if (currentGroup != null && !currentGroup!.isSubmitted) {
+      _checkSubmitAreas();
+    }
+
+    // Reset scale effects
+    _resetScaleEffects();
+  }
+
+  /// Unsubmit group from submit area
+  void _unsubmitGroup() {
+    if (currentGroup == null || currentGroup!.assignedArea == null) return;
+
+    final area = currentGroup!.assignedArea!;
+
+    // Remove from area
+    area.removeGroup();
+    currentGroup!.isSubmitted = false;
+
+    // Show connection lines again
+    currentGroup!.showConnectionLines();
+
+    // Reset marble colors to group color
+    currentGroup!.changeMarbleColors(currentGroup!.groupColor);
+
+    // Rebuild group pattern (circular arrangement)
+    currentGroup!.arrangeMarbles();
+  }
+
+  /// Bounce group back to submit area
+  void _bounceBackToArea(SubmitArea area) {
+    if (currentGroup == null) return;
+
+    // Rearrange marbles back to submit positions
+    area.arrangeMarblesInRows(currentGroup!);
+
+    // Add bounce effect to each marble
+    for (final marble in currentGroup!.marbles) {
+      marble.add(
+        SequenceEffect([
+          ScaleEffect.to(Vector2.all(1.2), EffectController(duration: 0.1)),
+          ScaleEffect.to(Vector2.all(1.0), EffectController(duration: 0.1)),
+        ]),
+      );
+    }
+  }
+
+  /// Reset scale effects for all marbles in group or single marble
+  void _resetScaleEffects() {
     // If in a group, reset scale for all group marbles
     if (currentGroup != null) {
       // Reset group priority
@@ -224,6 +307,21 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
     }
   }
 
+  /// Check if group overlaps with any submit area and submit if so
+  void _checkSubmitAreas() {
+    if (currentGroup == null) return;
+
+    final game = findParent<MarbleFlame>();
+    if (game == null) return;
+
+    for (final area in game.submitAreas) {
+      if (area.containsGroup(currentGroup!)) {
+        area.submitGroup(currentGroup!);
+        break; // Only submit to one area
+      }
+    }
+  }
+
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
@@ -242,6 +340,11 @@ class Marble extends CircleComponent with DragCallbacks, TapCallbacks {
   }
 
   void _handleDoubleTap() {
+    // Prevent detach if group is submitted
+    if (currentGroup != null && currentGroup!.isSubmitted) {
+      return; // Don't allow detach for submitted groups
+    }
+
     // Detach from group on double-tap
     if (currentGroup != null) {
       detachFromGroup();

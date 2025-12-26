@@ -143,6 +143,27 @@ class MarbleFlame extends FlameGame {
     }
   }
 
+  /// Clear all submit areas (unsubmit all groups)
+  void clearAllSubmitAreas() {
+    for (final area in submitAreas) {
+      if (area.assignedGroup != null) {
+        final group = area.assignedGroup!;
+
+        // Unsubmit the group
+        group.isSubmitted = false;
+
+        // Show connection lines again
+        group.showConnectionLines();
+
+        // Reset marble colors to group color
+        group.changeMarbleColors(group.groupColor);
+
+        // Remove from area
+        area.removeGroup();
+      }
+    }
+  }
+
   /// Animate all marbles to center and adjust count
   void animateMarblesToCenter(int count) {
     final marbles = children.whereType<Marble>().toList();

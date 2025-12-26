@@ -40,6 +40,9 @@ class MarbleGameController extends GetxController {
     isAnimating.value = true;
     final newEquation = equationGenerator.generateEquation();
 
+    // Clear all submit areas first (unsubmit groups)
+    game?.clearAllSubmitAreas();
+
     // Detach all groups first
     game?.detachAllGroups();
 

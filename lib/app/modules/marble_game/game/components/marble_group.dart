@@ -20,6 +20,7 @@ class MarbleGroup extends Component {
 
   // Animation state
   bool _linesAnimated = false;
+  bool _linesHidden = false; // Hide lines when submitted
 
   MarbleGroup({
     this.groupColor = const Color(0xFF64B5F6), // Soft blue default
@@ -43,7 +44,7 @@ class MarbleGroup extends Component {
     marble.playMergeAnimation();
 
     // Calculate and animate to pattern position
-    _arrangeMarbles();
+    arrangeMarbles();
 
     // Rebuild connection lines
     _rebuildConnectionLines();
@@ -53,7 +54,7 @@ class MarbleGroup extends Component {
   }
 
   /// Arrange marbles in radial pattern (all in circle)
-  void _arrangeMarbles() {
+  void arrangeMarbles() {
     if (marbles.isEmpty) return;
 
     final center = _calculateGroupCenter();
@@ -125,7 +126,7 @@ class MarbleGroup extends Component {
     }
 
     // Rearrange remaining marbles into new pattern
-    _arrangeMarbles();
+    arrangeMarbles();
 
     // Rebuild connection lines
     _rebuildConnectionLines();
@@ -272,12 +273,40 @@ class MarbleGroup extends Component {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Render connection lines
-    if (_linesAnimated) {
+    // Render connection lines (skip if hidden)
+    if (_linesAnimated && !_linesHidden) {
       for (final line in _connectionLines) {
         line.render(canvas);
       }
     }
+  }
+
+  /// Hide connection lines (for submitted groups)
+  void hideConnectionLines() {
+    _linesHidden = true;
+  }
+
+  /// Show connection lines
+  void showConnectionLines() {
+    _linesHidden = false;
+  }
+
+  /// Change all marble colors to match submit area
+  void changeMarbleColors(Color newColor) {
+    for (final marble in marbles) {
+      marble.changeColor(newColor);
+    }
+  }
+
+  /// Calculate the geometric center of all marbles in the group
+  Vector2 calculateGroupCenter() {
+    if (marbles.isEmpty) return Vector2.zero();
+
+    Vector2 sum = Vector2.zero();
+    for (final marble in marbles) {
+      sum += marble.position;
+    }
+    return sum / marbles.length.toDouble();
   }
 }
 
