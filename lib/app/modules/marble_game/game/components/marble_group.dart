@@ -4,13 +4,14 @@ import 'package:flutter/material.dart' hide Image, Gradient;
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/submit_area.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/constants/game_constants.dart';
-import 'package:marble_grouping_game/app/modules/marble_game/game/strategies/marble_arrangement_strategy.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/services/marble_arrangement_service/marble_arrangement_service.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/services/marble_arrangement_service/polygon_arrangement_service.dart';
 
 /// Manages a group of marbles with visual connections and animations
 class MarbleGroup extends Component {
   final List<Marble> marbles = [];
   final List<_ConnectionLine> _connectionLines = [];
-  late MarbleArrangementStrategy _arrangementStrategy;
+  late MarbleArrangementService _arrangementStrategy;
 
   SubmitArea? assignedArea;
   bool isSubmitted = false;
@@ -31,7 +32,7 @@ class MarbleGroup extends Component {
     priority = GameConstants.connectionLinePriority;
 
     // Initialize with radial arrangement strategy
-    _arrangementStrategy = RadialArrangementStrategy();
+    _arrangementStrategy = PolygonArrangementService();
   }
 
   /// Add a marble to this group with animation

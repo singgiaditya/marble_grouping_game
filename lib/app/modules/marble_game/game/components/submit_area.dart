@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:marble_grouping_game/app/core/themes/my_color.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/components/marble_group.dart';
 import 'package:marble_grouping_game/app/modules/marble_game/game/constants/game_constants.dart';
-import 'package:marble_grouping_game/app/modules/marble_game/game/strategies/marble_arrangement_strategy.dart';
+import 'package:marble_grouping_game/app/modules/marble_game/game/services/marble_arrangement_service/row_arrangement_service.dart';
 
 /// Submit area where marble groups can be placed for answer validation
 class SubmitArea extends PositionComponent {
@@ -115,7 +115,7 @@ class SubmitArea extends PositionComponent {
   void arrangeMarblesInRows(MarbleGroup group) {
     final startPosition = Vector2(position.x + size.x, position.y + size.y / 2);
 
-    final strategy = RowArrangementStrategy(
+    final strategy = RowArrangementService(
       startPosition: startPosition,
       marbleSpacing: GameConstants.marbleSpacing,
       rowSpacing: GameConstants.rowSpacing,
